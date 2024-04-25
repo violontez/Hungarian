@@ -4,69 +4,71 @@
 
 using namespace std;
 
-const int MAXN = 10;
-const int INF = 1e9;
+const int INF = 1e9; // Бесконечность
 
-int n, m;
-int cost[MAXN][MAXN];
-int minv[MAXN], minu[MAXN];
-int u[MAXN], v[MAXN], p[MAXN], way[MAXN];
-bool used[MAXN];
-
-void hungarian_algorithm() {
-    fill(p, p + MAXN, -1);
-    fill(v, v + MAXN, 0);
-    fill(u, u + MAXN, 0);
-    for (int i = 0; i < n; ++i) {
-        p[0] = i;
-        int j0 = 0;
-        fill(minv, minv + MAXN, INF);
-        fill(used, used + MAXN, false);
-        do {
-            used[j0] = true;
-            int i0 = p[j0], delta = INF, j1;
-            for (int j = 0; j < n; ++j)
-                if (!used[j]) {
-                    int cur = cost[i0][j] - u[i0] - v[j];
-                    if (cur < minv[j])
-                        minv[j] = cur, minu[j] = j0;
-                    if (minv[j] < delta)
-                        delta = minv[j], j1 = j;
+// Функция для поиска минимального элемента в матрице
+int findMin(const vector<vector<int>>& matrix, vector<bool>& rowUsed, vector<bool>& colUsed, int rows, int cols) {
+    int minVal = INF;
+    for (int i = 0; i < rows; ++i) {
+        if (!rowUsed[i]) {
+            for (int j = 0; j < cols; ++j) {
+                if (!colUsed[j]) {
+                    minVal = min(minVal, matrix[i][j]);
                 }
-            for (int j = 0; j < n; ++j)
-                if (used[j])
-                    u[p[j]] += delta, v[j] -= delta;
-                else
-                    minv[j] -= delta;
-            j0 = j1;
-        } while (p[j0] != -1);
-        do {
-            int j1 = minu[j0];
-            p[j0] = p[j1];
-            j0 = j1;
-        } while (j0);
+            }
+        }
+    }
+    return minVal;
+}
+
+// Функция для нахождения оптимального назначения с помощью венгерского алгоритма
+void hungarianAlgorithm(const vector<vector<int>>& matrix) {
+    int rows = matrix.size();    // Количество строк
+    int cols = matrix[0].size(); // Количество столбцов
+
+    // Создаем вспомогательные структуры данных
+    vector<int> rowAssign(rows, -1);
+    vector<int> colAssign(cols, -1);
+    vector<bool> rowUsed(rows, false);
+    vector<bool> colUsed(cols, false);
+
+    // Проходим по всем строкам матрицы
+    for (int i = 0; i < rows; ++i) {
+        int minVal = findMin(matrix, rowUsed, colUsed, rows, cols);
+        // Проходим по всем столбцам матрицы
+        for (int j = 0; j < cols; ++j) {
+            // Если текущий элемент равен минимальному значению и строка и столбец не используются
+            if (matrix[i][j] == minVal && !rowUsed[i] && !colUsed[j]) {
+                rowAssign[i] = j;
+                colAssign[j] = i;
+                rowUsed[i] = true;
+                colUsed[j] = true;
+                break;
+            }
+        }
+    }
+
+    // Выводим результат на экран
+    cout << "Оптимальное назначение:\n";
+    for (int i = 0; i < rows; ++i) {
+        cout << "Работник " << i + 1 << " -> Вакансия " << rowAssign[i] + 1 << "\n";
     }
 }
 
 int main() {
     setlocale(LC_ALL, "RUS");
-    // ���� ������
-    cout << "������� ���������� ���������� (�� ����� 10): ";
-    cin >> n;
-    cout << "������� ���������� ��������� ���� (�� ����� 10): ";
-    cin >> m;
-    cout << "������� ������� �����������:\n";
-    for (int i = 0; i < n; ++i)
-        for (int j = 0; j < m; ++j)
-            cin >> cost[i][j];
+    // Пример матрицы приоритетов (6 работников на 4 вакансии)
+    vector<vector<int>> matrix = {
+        {5, 7, 6, 1},
+        {3, 6, 7, 5},
+        {1, 4, 2, 6},
+        {6, 3, 9, 4},
+        {2, 5, 4, 7},
+        {1, 8, 3, 9}
+    };
 
-    // ������ ���������
-    hungarian_algorithm();
-
-    // ����� ����������
-    cout << "���������� ����������:\n";
-    for (int i = 0; i < m; ++i)
-        cout << "�������� " << i + 1 << ": �������� " << p[i] + 1 << "\n";
+    // Вызываем функцию решения задачи
+    hungarianAlgorithm(matrix);
 
     return 0;
 }
